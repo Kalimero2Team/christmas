@@ -39,7 +39,8 @@ public class CommandManager extends PaperCommandManager<CommandSender> {
 
 
         ImmutableList.of(
-                new GiftCommands(plugin, this)
+                new GiftCommands(plugin, this),
+                new SpawnCommand(plugin, this)
         ).forEach(CommandHandler::register);
 
 

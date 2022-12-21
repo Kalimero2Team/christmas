@@ -12,6 +12,7 @@ public class ChristmasPlugin extends JavaPlugin {
 
     private static ChristmasPlugin plugin;
     private Storage storage;
+    private LeaderBoard leaderBoard;
 
 
     @Override
@@ -27,7 +28,7 @@ public class ChristmasPlugin extends JavaPlugin {
         }
         storage = new Storage(this,new File(getDataFolder()+"/christmas.db"));
         getServer().getPluginManager().registerEvents(new InteractListener(),this);
-        new LeaderBoard(this);
+        leaderBoard = new LeaderBoard(this);
     }
 
     @Override
@@ -42,5 +43,8 @@ public class ChristmasPlugin extends JavaPlugin {
     public static ChristmasPlugin getPlugin() {
         return plugin;
     }
-    
+
+    public LeaderBoard getLeaderBoard() {
+        return leaderBoard;
+    }
 }

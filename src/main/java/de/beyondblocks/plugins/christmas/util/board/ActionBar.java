@@ -48,11 +48,7 @@ public class ActionBar {
     public Component getComponent() {
         List<TagResolver> placeholders = new ArrayList<>();
         Arrays.stream(placeholderProviders).forEach(placeholderProvider -> {
-            try {
-                placeholders.add(placeholderProvider.getPlaceholder());
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            placeholders.add(placeholderProvider.getPlaceholder());
         });
 
         return MiniMessage.miniMessage().deserialize(message, placeholders.toArray(new TagResolver[0]));

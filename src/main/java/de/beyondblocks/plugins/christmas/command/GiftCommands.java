@@ -1,6 +1,7 @@
 package de.beyondblocks.plugins.christmas.command;
 
 import cloud.commandframework.bukkit.parsers.MaterialArgument;
+import cloud.commandframework.bukkit.parsers.location.LocationArgument;
 import cloud.commandframework.context.CommandContext;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.WorldEdit;
@@ -10,6 +11,7 @@ import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.session.SessionManager;
 import com.sk89q.worldedit.world.World;
 import de.beyondblocks.plugins.christmas.ChristmasPlugin;
+import de.beyondblocks.plugins.christmas.storage.Gift;
 import de.beyondblocks.plugins.christmas.util.PlayerHeads;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -61,26 +63,36 @@ public class GiftCommands extends CommandHandler {
                         .senderType(Player.class)
                         .handler(this::list)
         );
+        commandManager.command(
+                commandManager.commandBuilder("gifts")
+                        .literal("isGift")
+                        .permission("christmas.isGift")
+                        .senderType(Player.class)
+                        .argument(LocationArgument.of("location"))
+                        .handler(this::isGift)
+
+        );
+    }
+
+    private void isGift(CommandContext<CommandSender> context) {
+        Player player = (Player) context.getSender();
+        Gift location = plugin.getStorage().getGiftFromLocation(context.get("location"));
+        if(location == null){
+            player.sendMessage("This is not a gift");
+        }else{
+            player.sendMessage("This is a gift");
+        }
     }
 
     private void list(CommandContext<CommandSender> context) {
         Player player = (Player) context.getSender();
-        try {
-            player.sendMessage(plugin.getStorage().getGifts().size()+ " gifts exist");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        player.sendMessage(plugin.getStorage().getGifts().size()+ " gifts exist");
     }
 
     private void reset(CommandContext<CommandSender> context) {
         Player player = (Player) context.getSender();
-        try {
-            plugin.getStorage().removePlayerGifts(player.getUniqueId().toString());
-            player.sendMessage("Gifts reset");
-        } catch (SQLException e) {
-            e.printStackTrace();
-            player.sendMessage("Error while resetting gifts");
-        }
+        plugin.getStorage().removePlayerGifts(player.getUniqueId().toString());
+        player.sendMessage("Gifts reset");
     }
 
     private void giveRandom(CommandContext<CommandSender> context) {
@@ -109,12 +121,7 @@ public class GiftCommands extends CommandHandler {
                         blockAt.getRelative(BlockFace.UP).setType(Material.AIR);
                         Rotatable blockData = (Rotatable) blockAt.getBlockData();
                         blockData.setRotation(PlayerHeads.randomBlockFace());
-                        try {
-                            plugin.getStorage().addGift(String.valueOf(UUID.randomUUID()), blockAt.getX(), blockAt.getY(), blockAt.getZ(), blockAt.getWorld().getName());
-                        } catch (SQLException e) {
-                            player.sendMessage("§cError while adding gift");
-                            e.printStackTrace();
-                        }
+                        plugin.getStorage().addGift(String.valueOf(UUID.randomUUID()), blockAt.getX(), blockAt.getY(), blockAt.getZ(), blockAt.getWorld().getName());
                     }
                 });
             }

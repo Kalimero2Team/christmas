@@ -14,7 +14,6 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,7 +32,6 @@ public class CustomBoard {
     List<String> teamIds = new ArrayList<>();
     private int taskId;
     private boolean shown;
-    private int taskTicks;
 
     public CustomBoard(ChristmasPlugin plugin, Player player, PlaceholderProvider... placeholderProviders) {
         this.plugin = plugin;
@@ -62,6 +60,10 @@ public class CustomBoard {
         objective.getScore(randomColor.getFirstColor() + "" + randomColor.getSecondColor()).setScore(line - 1);
     }
 
+    public void update() {
+        updateLines(rawScoreboard);
+    }
+
     public void updateLines(List<String> lines) {
         for (int i = 0; i < lines.size(); i++) {
             updateLine(i, lines.get(i));
@@ -83,18 +85,13 @@ public class CustomBoard {
     public Component getComponent(String line) {
         List<TagResolver> placeholders = new ArrayList<>();
         Arrays.stream(placeholderProviders).forEach(placeholderProvider -> {
-            try {
-                placeholders.add(placeholderProvider.getPlaceholder());
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            placeholders.add(placeholderProvider.getPlaceholder());
         });
 
         return MiniMessage.miniMessage().deserialize(line, placeholders.toArray(new TagResolver[0]));
     }
 
     private void startSchedule(int ticks) {
-        taskTicks = ticks;
         taskId = new BukkitRunnable() {
             @Override
             public void run() {
@@ -109,7 +106,7 @@ public class CustomBoard {
     }
 
     private void stopSchedule() {
-        if(shown) {
+        if (shown) {
             Bukkit.getScheduler().cancelTask(taskId);
         }
         shown = false;
@@ -139,13 +136,11 @@ public class CustomBoard {
     }
 
     public void hideScoreboard() {
-        stopSchedule();
         player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
     }
 
     public void showScoreboard() {
         setScoreboard();
-        if (!shown) startSchedule(20);
     }
 
 }
