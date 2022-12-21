@@ -4,14 +4,11 @@ import de.beyondblocks.plugins.christmas.ChristmasPlugin;
 import org.bukkit.Location;
 
 import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 public class Storage {
     private final ChristmasPlugin plugin;
@@ -248,6 +245,24 @@ public class Storage {
         }
         return 0;
     }
+
+    public String getPlayerForPlace(int place) {
+        try {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT PLAYER_UUID, COUNT(*) AS COUNT FROM GIFTS_FOUND GROUP BY PLAYER_UUID ORDER BY COUNT DESC");
+            int currentPlace = 1;
+            while (resultSet.next()) {
+                if (currentPlace == place) {
+                    return resultSet.getString("PLAYER_UUID");
+                }
+                currentPlace++;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
     public void close() {
         try {

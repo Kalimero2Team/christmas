@@ -1,5 +1,6 @@
 package de.beyondblocks.plugins.christmas.listener;
 
+import com.destroystokyo.paper.event.block.BlockDestroyEvent;
 import de.beyondblocks.plugins.christmas.ChristmasPlugin;
 import de.beyondblocks.plugins.christmas.storage.Gift;
 import net.kyori.adventure.text.Component;
@@ -7,6 +8,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 
@@ -36,5 +38,18 @@ public class InteractListener implements Listener {
         }
     }
 
+    @EventHandler
+    public void onBlockDestroy(BlockDestroyEvent event) {
+        if (ChristmasPlugin.getPlugin().getStorage().getGiftFromLocation(event.getBlock().getLocation()) != null) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        if (ChristmasPlugin.getPlugin().getStorage().getGiftFromLocation(event.getBlock().getLocation()) != null) {
+            event.setCancelled(true);
+        }
+    }
 
 }

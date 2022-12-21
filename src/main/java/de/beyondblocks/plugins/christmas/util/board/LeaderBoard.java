@@ -4,18 +4,14 @@ import de.beyondblocks.plugins.christmas.ChristmasPlugin;
 import de.beyondblocks.plugins.christmas.storage.Gift;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 public class LeaderBoard implements Listener {
 
@@ -36,6 +32,18 @@ public class LeaderBoard implements Listener {
     public LeaderBoard(ChristmasPlugin plugin) {
         this.plugin = plugin;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        // Load the Leaderboard
+        loadPlace(1);
+        loadPlace(2);
+        loadPlace(3);
+    }
+
+    private void loadPlace(int firstPlace) {
+        String playerForPlace = plugin.getStorage().getPlayerForPlace(firstPlace);
+        if (playerForPlace != null) {
+            UUID uuid = UUID.fromString(playerForPlace);
+            giftMap.put(uuid, plugin.getStorage().getPlayerFoundGifts(uuid.toString()));
+        }
     }
 
 
@@ -122,12 +130,11 @@ public class LeaderBoard implements Listener {
         int thirdLargest = giftMap.values().stream()
                 .mapToInt(List::size)
                 .sorted()
-                .skip(2)
-                .limit(1)
-                .findFirst()
+                .limit(3)
+                .min()
                 .orElse(0);
 
-        return giftMap.get(uuid).size() > thirdLargest;
+        return giftMap.get(uuid).size() >= thirdLargest;
     }
 
     private UUID getUUIDForPlace(int place) {
@@ -145,21 +152,25 @@ public class LeaderBoard implements Listener {
     }
 
     public PlaceholderProvider getPlaceHolderForPlace(int place) {
-        UUID uuid = getUUIDForPlace(place);
-        if (uuid != null) {
-            return () -> Placeholder.unparsed("place_" + place, Objects.requireNonNullElse(plugin.getServer().getOfflinePlayer(uuid).getName(), "Unbekannt"));
-        } else {
-            return () -> Placeholder.unparsed("place_" + place, "null");
-        }
+        return () -> {
+            UUID uuid = getUUIDForPlace(place);
+            if (uuid != null) {
+                return Placeholder.unparsed("place_" + place, Objects.requireNonNullElse(Bukkit.getOfflinePlayer(uuid).getName(), "Unbekannt"));
+            } else {
+                return Placeholder.unparsed("place_" + place, "Niemand");
+            }
+        };
     }
 
     public PlaceholderProvider getPlaceHolderForPoints(int place) {
-        UUID uuid = getUUIDForPlace(place);
-        if (uuid != null) {
-            return () -> Placeholder.unparsed("points_" + place, String.valueOf(giftMap.get(uuid).size()));
-        } else {
-            return () -> Placeholder.unparsed("points_" + place, "0");
-        }
+        return () -> {
+            UUID uuid = getUUIDForPlace(place);
+            if (uuid != null) {
+                return Placeholder.unparsed("points_" + place, String.valueOf(giftMap.get(uuid).size()));
+            } else {
+                return Placeholder.unparsed("points_" + place, "0");
+            }
+        };
     }
 
 

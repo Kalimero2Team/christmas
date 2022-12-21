@@ -13,6 +13,7 @@ import com.sk89q.worldedit.world.World;
 import de.beyondblocks.plugins.christmas.ChristmasPlugin;
 import de.beyondblocks.plugins.christmas.storage.Gift;
 import de.beyondblocks.plugins.christmas.util.PlayerHeads;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -20,10 +21,10 @@ import org.bukkit.block.Skull;
 import org.bukkit.block.data.Rotatable;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.bukkit.scheduler.BukkitRunnable;
 
-import java.sql.SQLException;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GiftCommands extends CommandHandler {
     protected GiftCommands(ChristmasPlugin plugin, CommandManager commandManager) {
@@ -101,8 +102,14 @@ public class GiftCommands extends CommandHandler {
         }
     }
 
+    private BukkitRunnable addGiftsTask;
+
     private void addGifts(CommandContext<CommandSender> context) {
         if (context.getSender() instanceof Player player) {
+            if(addGiftsTask != null){
+                player.sendMessage(Component.text("Task already running ..."));
+                return;
+            }
             WorldEdit worldEdit = WorldEdit.getInstance();
             BukkitPlayer wePlayer = BukkitAdapter.adapt(player);
             SessionManager sessionManager = WorldEdit.getInstance().getSessionManager();
@@ -111,19 +118,35 @@ public class GiftCommands extends CommandHandler {
             World selectionWorld = localSession.getSelectionWorld();
             if (selectionWorld != null) {
                 Region selection = localSession.getSelection();
-                selection.forEach(blockVector -> {
-                    Block blockAt = BukkitAdapter.adapt(selectionWorld).getBlockAt(blockVector.getBlockX(), blockVector.getBlockY(), blockVector.getBlockZ());
-                    if (blockAt.getType().equals(context.get("material"))) {
-                        blockAt.setType(Material.PLAYER_HEAD);
-                        Skull skull = (Skull) blockAt.getState();
-                        skull.setPlayerProfile(PlayerHeads.getRandomPlayerProfile(plugin));
-                        skull.update();
-                        blockAt.getRelative(BlockFace.UP).setType(Material.AIR);
-                        Rotatable blockData = (Rotatable) blockAt.getBlockData();
-                        blockData.setRotation(PlayerHeads.randomBlockFace());
-                        plugin.getStorage().addGift(String.valueOf(UUID.randomUUID()), blockAt.getX(), blockAt.getY(), blockAt.getZ(), blockAt.getWorld().getName());
+                addGiftsTask = new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        AtomicInteger counter = new AtomicInteger();
+                        selection.forEach(blockVector -> {
+                            Block blockAt = BukkitAdapter.adapt(selectionWorld).getBlockAt(blockVector.getBlockX(), blockVector.getBlockY(), blockVector.getBlockZ());
+                            if (blockAt.getType().equals(context.get("material"))) {
+                                counter.getAndIncrement();
+                                new BukkitRunnable(){
+                                    @Override
+                                    public void run() {
+                                        blockAt.setType(Material.PLAYER_HEAD, false);
+                                        Skull skull = (Skull) blockAt.getState();
+                                        skull.setPlayerProfile(PlayerHeads.getRandomPlayerProfile(plugin));
+                                        skull.update();
+                                        blockAt.getRelative(BlockFace.UP).setType(Material.AIR);
+                                        Rotatable blockData = (Rotatable) blockAt.getBlockData();
+                                        blockData.setRotation(PlayerHeads.randomBlockFace());
+                                        plugin.getStorage().addGift(String.valueOf(UUID.randomUUID()), blockAt.getX(), blockAt.getY(), blockAt.getZ(), blockAt.getWorld().getName());
+                                    }
+                                }.runTask(plugin);
+                            }
+                        });
+                        player.sendMessage(Component.text(counter.get()+" Gifts added"));
+                        addGiftsTask = null;
                     }
-                });
+                };
+                addGiftsTask.runTaskAsynchronously(plugin);
+
             }
 
         }
