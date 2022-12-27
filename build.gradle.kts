@@ -20,7 +20,7 @@ repositories {
 dependencies {
     paperDevBundle("1.19.3-R0.1-SNAPSHOT")
     bukkitLibrary("cloud.commandframework", "cloud-paper", "1.8.0")
-    bukkitLibrary("org.xerial", "sqlite-jdbc", "3.39.2.0")
+    bukkitLibrary("org.xerial", "sqlite-jdbc", "3.40.0.0")
     compileOnly("com.fastasyncworldedit", "FastAsyncWorldEdit-Core", "2.5.0")
     compileOnly("com.fastasyncworldedit","FastAsyncWorldEdit-Bukkit","2.5.0") {
         isTransitive = false
