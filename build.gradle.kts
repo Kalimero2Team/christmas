@@ -4,7 +4,7 @@ plugins {
     `java-library`
     id("xyz.jpenilla.run-paper") version "1.0.6"
     id("net.minecrell.plugin-yml.bukkit") version "0.5.2"
-    id("io.papermc.paperweight.userdev") version "1.3.8"
+    id("io.papermc.paperweight.userdev") version "1.4.1"
 }
 
 group = "de.beyondblocks.plugins"
